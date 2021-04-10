@@ -31,7 +31,15 @@ d. Orders Page where the admin can add/delete/edit/show orders
 
 -------------------------
 
-**MongoDB**
+## MongoDB
+
+**Start With MongoDB**
+
+- > useful links for MongoDB
+
+    [mongoose package](https://www.npmjs.com/package/mongoose)
+    
+    [mongoose Queries](https://mongoosejs.com/docs/queries.html)
 
 - Install MongoDB Instructions :
 
@@ -227,3 +235,89 @@ function getFood(req, res, next) {
 
 ```
 
+----------------------------------------------------------
+
+## Express
+
+**Start With Node Js** 
+
+- Create server file `Touch server.js File`
+- Create package Josn file and config server
+    `npm init -y ` or `npm init -n`
+- install dependencies 
+    `npm i express cors dotenv superagent pg method-override ejs`
+
+- Create `.env` file 
+
+- requires all dependencies in server.js and require varible & Things -> its like a general Templete so we can copy it and paste and then start write code
+
+
+```
+
+'use strict';
+
+require('dotenv').config();
+const express = require('express');
+const app = express();
+const cors = require('cors');
+const methodOverride = require('method-override');
+const superagent = require('superagent');
+
+/////////////// App Setup Related /////////////////////
+
+app.use(cors());
+app.use(express.urlencoded({ extended: true }));
+app.use('/public', express.static('public'));
+app.use(methodOverride('_method'));
+app.set('view engine', 'ejs');
+
+// its very very important - > without it we will receive req.body as an empty object {}
+app.use(express.json({type: ['application/json', 'text/plain']}))
+
+// Use this as a talking point about environment variables
+const PORT = process.env.PORT || 3002;
+
+
+```
+
+- To Create a Route -> such as `/home`
+
+*we use `app.get(route as a string, The handelfunction )` and the function take `req` and `res` as a defulte parameters*
+
+*For Example*
+
+```
+app.get('/home',handelHome);
+
+function handelHome (req,res){
+
+    res.send('Hello')       // render on window
+
+    // OR //
+    res.render('index.ejs', { booksItems: selctedBooksArr }); 
+    
+    // it render in specific ejs page (index.ejs) and pass an object that carry the data to this page
+}
+```
+
+
+
+---------------------------------------------------------
+## Fetch
+
+
+> The Correct way to fire / fetch and post data 
+
+```
+handleSubmit(event) {
+        let url = `http://localhost:3031/round`;
+        fetch(url,
+        {
+            body: JSON.stringify(this.state),           // should be a JOSN Format and an Object
+            method: "post"
+        }).then(res => res.json())                      // the res should convert josn to object
+        .then(res => console.log('res >>>>',res));          // res is the fetch response from server
+
+        event.preventDefault();
+    }
+```
