@@ -62,7 +62,7 @@ app.delete('/deleteOrders/:id',handelDeleteOrders);
 function handeladminSingUp(req,res){
     console.log("req body >>>>",req.body);
     admins.create(req.body).then(data=>{
-        res.status(201).json(data);
+        res.status(201).json('registred');
     }).catch(err=> {
         res.status(201).json(err);
     });
@@ -119,7 +119,6 @@ function handelNewOrders (req,res){
     orders.create(req.body).then(data=>{
         res.status(201).json(data);
     }).catch(err=> {
-        
         res.status(201).json(err);
     });
 
@@ -131,7 +130,8 @@ function handelEditOrders (req,res){
     orders.update(id,req.body).then(data => {
         res.status(200).json(data);
     }).catch(err=> {
-        console.log(err);
+        // console.log(err);
+        res.status(200).json('err');
     });
 }
 
@@ -140,9 +140,10 @@ function handelDeleteOrders (req,res){
     const id = req.params.id;
     console.log(id);
     orders.delete(id).then(data => {
-        res.status(200).json(data);
+        res.status(200).json('Deleted');
+        // res.redirect(200, '/dashboard');        
     }).catch(err=> {
-        console.log(err);
+        res.status(200).json('Order Not Found');
     });
 }
 
