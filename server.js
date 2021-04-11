@@ -44,6 +44,11 @@ const PORT = process.env.PORT || 3002;
 
 //////////////////// Routes //////////////////
 
+app.get('/', (req, res) => {
+    res.send('<h1>Express Demo App</h1> <h4>Message: Success</h4> <p>Version 1.1</p>');
+  })
+
+  
 app.post('/adminSingUp',handeladminSingUp);
 app.post('/adminLogin',handeladminLogin);
 app.get('/admins',handelAdmins);
@@ -54,6 +59,7 @@ app.get('/orders/:id',handelOrders);
 app.post('/newOrders',handelNewOrders);
 app.put('/editOrders/:id',handelEditOrders);
 app.delete('/deleteOrders/:id',handelDeleteOrders);
+
 
 
 ////////////// Admin Handel Functions ///////////////
