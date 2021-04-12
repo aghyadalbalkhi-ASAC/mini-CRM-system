@@ -308,6 +308,10 @@ function handelHome (req,res){
 
 > The Correct way to fire / fetch and post data 
 
+**plz make sure to send the request as JSON Object and you setup Express File to recive JSON through app.use**
+
+`app.use(express.json({type: ['application/json', 'text/plain']}))`
+
 ```
 handleSubmit(event) {
         let url = `http://localhost:3031/round`;
@@ -321,3 +325,139 @@ handleSubmit(event) {
         event.preventDefault();
     }
 ```
+
+
+------------------------------------------------------------
+
+## Deploy On  AWS EC2
+
+- Launch instance EC2 (Ubuntu Img)
+- In Group Security Page make sure to Add Http (80) and Http Rules (Opening Port) and open add your Custom Port as you need  like port 3000 for Express server
+- Ports that you need to open it :
+    - Http port 80 by default 
+    - Https 443 by defult 
+    - 3000 for Express or the port that you defined in your server.js file or .env
+    - 27017 for MongoDB
+
+- Create a new Pair Key and Download it so we can used to connect to our EC2 through SSH
+- open your terminal and locate to your key file path then run the command 
+` ssh -i "file name" ubuntu@instance Public DNS` for example -> `ssh -i "xina.pem" ubuntu@ec2-54-209-2-124.compute-1.amazonaws.com`
+
+- now you should access your EC2 ubuntu and you can deal with it through terminal (like wsl on windows)
+
+- first things update packages -> `Update packages` and `sudo apt upgrade -y`
+
+- install all configration that you need for example nodejs
+
+    - NodeJs  - > [nodesource](https://github.com/nodesource/distributions/blob/master/README.md) open this link and choice you node version that you want and then run the commands for that version .. for example -> `curl -fsSL https://deb.nodesource.com/setup_14.x | sudo -E bash -` and `sudo apt-get install -y nodejs`
+
+    - MongoDB  - > [MongoDB ref ](https://faun.pub/install-mongodb-on-aws-ubuntu-ec2-instance-6794cd8e3b4e)
+    open this link and follow the instructions
+
+    - after install all dependencies the clone your projects `react app` or `express app`
+    - **Note :** EC2 server deal with port 80 as a defualt port so we need reverse proxy using nginx 
+    package
+
+    - install nginx package `sudo apt install nginx -y` after installed run this command `sudo systemctl enable nginx` to enable to auto work on rebooting 
+
+    - **important** copy your Public IPv4 DNS and hit it in broswer url with out `s` in https protocol 
+    for example - > `http://ec2-54-209-2-124.compute-1.amazonaws.com/home` notice its http not https
+
+    - if you see the nginx page then everything until now is running well ^-^
+
+    - locate to your react app directory and run this command to build your app `npm run build` then 
+    build folder will create to you 
+
+    - In client side world we can just serve a static file to broswer (client) so for that we built our
+    react app 
+
+    - after build react app navigate to `/etc/nginx/sites-available` and you will see default inside it
+    - The `default` server block is what will be responsible for handling requests that don't match any other server blocks. Right now if you navigate to your server ip, you will see a pretty bland html page that says NGINX is installed. That is the `default` server block in action. 
+
+    - There is two ways to deal with this 1- modife the default file  2- create another file by copying the
+    default file and modife it  **I modifed the default file and its work fine**
+
+    - open the new server block file `default` and modify it so it matches below where the root is the path of build react folder that we create using `npm run build` and location is navgaite to index.html
+
+```
+    server {
+        listen 80;
+        listen [::]:80;
+
+         root /home/ubuntu/apps/yelp-app/client/build;  
+
+        # Add index.php to the list if you are using PHP
+        index index.html index.htm index.nginx-debian.html;
+
+        server_name sanjeev.xyz www.sanjeev.xyz;
+
+        location / {
+                try_files $uri /index.html;
+        }
+
+            // We can not use this location where its for example only if we have another route but the
+             // first location is very important 
+
+         location /api {
+            proxy_pass http://localhost:3001;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection 'upgrade';
+            proxy_set_header Host $host;
+            proxy_cache_bypass $http_upgrade;
+        }
+
+}
+```
+
+- restart nginx by using this command `sudo service nginx restart` if not work go and google it ^-^ [helper ref](https://www.cyberciti.biz/faq/nginx-restart-ubuntu-linux-command/)
+
+- **Very very Important Note:** without Specify the correct root then the app will not deploy it
+(first and important thing make sure that nginx installed and work fine as we said above)
+
+- **Very very Important Note:** without Specify `try_files $uri /index.html;` the index.html in location 
+the routers will not work fine as the work on react app coz here we deal with static files
+
+- if every things working fine the go and setup the backend server 
+
+- use this offical link if you faced any issues [Deployment](https://create-react-app.dev/docs/deployment/)
+
+- **if still doesnt work try to deploy the simplest react app -> the one we create react app *-^**
+
+- clone your express app from your githun repo or connect to instance via `FileZilla Client` and upload your server file `without node modules & .git`
+
+- run npm i to install dependencies and `touch .env` then open it using `sudo nano filename` and edit it (dont forgot `NODE_ENV=production`) it is common practice. For many other projects(depending on how the backend is setup) they may require this to be set in a production environment.
+
+- to save use `ctrl o` and `enter to save` and then `ctrl x` to exit  (for remove files or folders use `sudo rm -r file/folder path`)
+
+- if you have a database make sure that you installed it and refer to it in your `.env` file and you opened a port for it from `Security groups` in EC2 
+
+- please note that you need to open the ports to the sever and database (if it loacly) and any thing using ports through Security groups EC2
+
+- run your server and you should see `server is listening to port ####`
+
+- after that hit the `Public IPv4 DNS` with your server port at any route to ensure you can fetch the server routes  --- > url in http mode without s
+
+- for example the Public IPv4 DNS is `ec2-54-209-2-124.compute-1.amazonaws.com` and the server listening port is 3030 then fire the `http://ec2-54-209-2-124.compute-1.amazonaws.com:3030/books` and it should response 
+
+- The finall thing Keep App Server running using `PM2` 
+- To Install PM2 run `npm install pm2 -g` command and It will install PM2 package globally on server.
+- Switch to our app directory and run `sudo pm2 start server.js`
+
+- Now even if you close the terminal and check the url in the browser, the app will be running. Sweet! For automatically running PM2 when the server restarts, issue the following command: `sudo pm2 startup`
+
+**Note :** Do not forget to change the endpoints url in your react app to Public IPv4 DNS 
+
+> Useful Links
+    - [ourcodeworld](https://ourcodeworld.com/articles/read/977/how-to-deploy-a-node-js-application-on-aws-ec2-server)
+    - [dev](https://dev.to/sunilmore690/complete-setup-for-deploying-nodejs-app-with-mongodb-database-on-amazon-ec2-3plj)
+    - [Sanjeev Thiyagarajan](https://www.youtube.com/watch?v=NjYsXuSBZ5U&t=1s)
+    - [Deploy MERN STACK App with AWS EC2](https://www.youtube.com/watch?v=HtWgb_vbyvY&t=2s)
+    - [Deploy a NodeJS React app to AWS EC2](https://www.youtube.com/watch?v=rE8mJ1OYjmM)
+---------------------------------------------------
+
+## Contact Info : 
+**Please Feel Free To Contact Me When You Need help ^_^**
+* [www.facebook.com/aghyadalbalkhi](www.facebook.com/aghyadalbalkhi)
+* [https://www.linkedin.com/in/magheadalbalkhe/](https://www.linkedin.com/in/magheadalbalkhe/)
+* Email : aghyadalbalkhi@gmail.com
